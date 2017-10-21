@@ -2,6 +2,7 @@ KOMACHI_BRACKET_COLOR="%{$fg[white]%}"
 KOMACHI_AWSENV_COLOR="%{$fg[yellow]%}"
 KOMACHI_MKRENV_COLOR="%{$fg[cyan]%}"
 KOMACHI_RVM_COLOR="%{$fg[magenta]%}"
+KOMACHI_PYENV_COLOR="%{$fg[magenta]%}"
 KOMACHI_PLENV_COLOR="%{$fg[magenta]%}"
 KOMACHI_PERL_LOCALLIB_COLOR="%{$fg[magenta]%}"
 KOMACHI_DIR_COLOR="%{$fg[cyan]%}"
@@ -22,6 +23,14 @@ _get_aws_profile () {
 
 _get_mackerel_profile () {
 	echo $MACKEREL_PROFILE
+}
+
+_get_pythonversion () {
+	local pythonversion
+	if which pyenv &> /dev/null; then
+		pythonversion=$(pyenv version | sed -e 's/ (set.*$//' -e 's/^python-//')
+	fi
+	echo $pythonversion
 }
 
 _get_rubyversion () {
@@ -78,7 +87,8 @@ _get_prompt () {
 		_get_awsenv
 		_get_plenv
 		_get_rbenv
-		echo "$KOMACHI_HOST_$KOMACHI_MKRENV_$KOMACHI_AWSENV_$KOMACHI_PLENV_$KOMACHI_RVM_:$KOMACHI_DIR_$KOMACHI_PROMPT_"
+		_get_pyenv
+		echo "$KOMACHI_HOST_$KOMACHI_MKRENV_$KOMACHI_AWSENV_$KOMACHI_PLENV_$KOMACHI_RVM_$KOMACHI_PYENV_:$KOMACHI_DIR_$KOMACHI_PROMPT_"
 	else
 		echo "$KOMACHI_HOST_$KOMACHI_DIR_$KOMACHI_PROMPT_"
 	fi
@@ -90,7 +100,8 @@ _get_rprompt () {
 		_get_awsenv
 		_get_plenv
 		_get_rbenv
-		echo "$KOMACHI_MKRENV_$KOMACHI_AWSENV_$KOMACHI_PLENV_$KOMACHI_RVM_"
+		_get_pyenv
+		echo "$KOMACHI_MKRENV_$KOMACHI_AWSENV_$KOMACHI_PLENV_$KOMACHI_RVM_$KOMACHI_PYENV_"
 	fi
 }
 
@@ -123,6 +134,14 @@ _get_rbenv () {
 		KOMACHI_RVM_="$KOMACHI_BRACKET_COLOR"[rb:"$KOMACHI_RVM_COLOR${$(_get_rubyversion)}$KOMACHI_BRACKET_COLOR"]"%{$reset_color%}"
 	else
 		KOMACHI_RVM_=
+	fi
+}
+
+_get_pyenv () {
+	if [[ "$(_get_pythonversion)" != "" ]] ; then
+		KOMACHI_PYENV_="$KOMACHI_BRACKET_COLOR"[py:"$KOMACHI_PYENV_COLOR${$(_get_pythonversion)}$KOMACHI_BRACKET_COLOR"]"%{$reset_color%}"
+	else
+		KOMACHI_PYENV_=
 	fi
 }
 

@@ -16,6 +16,13 @@ ZSH_THEME_GIT_PROMPT_SUFFIX=""
 ZSH_THEME_GIT_PROMPT_CLEAN=" $KOMACHI_GIT_CLEAN_COLOR✓"
 ZSH_THEME_GIT_PROMPT_DIRTY=" $KOMACHI_GIT_DIRTY_COLOR✗"
 
+KOMACHI_PLENV_PATH=${$(whence -p plenv):A:h}
+KOMACHI_PYENV_PATH=${$(whence -p pyenv):A:h}
+KOMACHI_RBENV_PATH=${$(whence -p rbenv):A:h}
+KOMACHI_PLENV_ROOT=${PLENV_ROOT:-$(command plenv exec perl -e 'print $ENV{"PLENV_ROOT"}')}
+KOMACHI_PYENV_ROOT=${PYENV_ROOT:-$(command pyenv exec python -c 'import os; print(os.environ.get("PYENV_ROOT"))')}
+KOMACHI_RBENV_ROOT=${RBENV_ROOT:-$(command rbenv exec ruby -e 'print ENV["RBENV_ROOT"]')}
+
 # Our elements:
 _get_aws_profile () {
 	echo $AWS_PROFILE
@@ -27,19 +34,19 @@ _get_mackerel_profile () {
 
 _get_pythonversion () {
 	local pythonversion
-	if which pyenv &> /dev/null; then
-		pythonversion=$(pyenv version | sed -e 's/ (set.*$//' -e 's/^python-//')
+	if ! whence -p pyenv > /dev/null; then
+		return
 	fi
-	echo $pythonversion
+	PYENV_ROOT=$KOMACHI_PYENV_ROOT path=($KOMACHI_PYENV_PATH $path) pyenv-version-name
 }
 
 _get_rubyversion () {
 	local rubyversion
 	if [ -e ~/.rvm/bin/rvm-prompt ]; then
-		rubyversion=${$(~/.rvm/bin/rvm-prompt i v g)#ruby-}
+		rubyversion=${$(commad ~/.rvm/bin/rvm-prompt i v g)#ruby-}
 	else
 		if which rbenv &> /dev/null; then
-			rubyversion=$(rbenv version | sed -e 's/ (set.*$//' -e 's/^ruby-//')
+			rubyversion=$(RBENV_ROOT=$KOMACHI_RBENV_ROOT path=($KOMACHI_RBENV_PATH $path) rbenv-version-name)
 		fi
 	fi
 	echo $rubyversion
@@ -48,20 +55,20 @@ _get_rubyversion () {
 _get_perlversion () {
 	local perlversion
 	local perlpath
-	perlpath=$(which perl)
+	perlpath=$(whence -p perl)
 	if [[ "$perlpath" =~ "plenv" ]] ; then
-		perlversion=$(plenv version | sed -e 's/ (set.*$//')
+		perlversion=$(PLENV_ROOT=$KOMACHI_PLENV_ROOT path=($KOMACHI_PLENV_PATH $path) plenv-version-name)
 	elif [[ "$perlpath" =~ "perlbrew" ]] ; then
-		perlversion=$(perlbrew use | sed -e 's/^Currently using //' -e 's/^perl-//')
+		perlversion=$(command perlbrew use | sed -e 's/^Currently using //' -e 's/^perl-//')
 	else
-		perlversion=$(perl -e 'use version; print version->parse($])->normal' 2>/dev/null || perl -e 'print $]')
+		perlversion=$(command perl -e 'use version; print version->parse($])->normal' 2>/dev/null || perl -e 'print $]')
   fi
 	echo $perlversion
 }
 _get_perllocallib () {
 	local perllocallib
 	if [[ -n "$PERL_LOCAL_LIB_ROOT" ]] ; then
-		perllocallib=$(perl -MFile::Spec::Functions=abs2rel -le '($a = shift) =~s/\A:+//msx;print abs2rel($a)' $PERL_LOCAL_LIB_ROOT)
+		perllocallib=$(command perl -MFile::Spec::Functions=abs2rel -le '($a = shift) =~s/\A:+//msx;print abs2rel($a)' $PERL_LOCAL_LIB_ROOT)
 		echo "%{$reset_color%}|llib:${KOMACHI_PERL_LOCALLIB_COLOR}$perllocallib"
 	fi
 }
@@ -122,24 +129,27 @@ _get_awsenv () {
 }
 
 _get_plenv () {
-  if [[ "$(_get_perlversion)" != "" ]] ; then
-	  KOMACHI_PLENV_="$KOMACHI_BRACKET_COLOR"[pl:"$KOMACHI_PLENV_COLOR${$(_get_perlversion)}${$(_get_perllocallib)}$KOMACHI_BRACKET_COLOR"]"%{$reset_color%}"
+	local PERL_VERSION=$(_get_perlversion)
+  if [[ -n $PERL_VERSION ]] ; then
+	  KOMACHI_PLENV_="$KOMACHI_BRACKET_COLOR"[pl:"$KOMACHI_PLENV_COLOR${PERL_VERSION}${$(_get_perllocallib)}$KOMACHI_BRACKET_COLOR"]"%{$reset_color%}"
 	else
 		KOMACHI_PLENV_=
   fi
 }
 
 _get_rbenv () {
-	if [[ "$(_get_rubyversion)" != "" ]] ; then
-		KOMACHI_RVM_="$KOMACHI_BRACKET_COLOR"[rb:"$KOMACHI_RVM_COLOR${$(_get_rubyversion)}$KOMACHI_BRACKET_COLOR"]"%{$reset_color%}"
+	local RUBY_VERSION=$(_get_rubyversion)
+	if [[ -n $RUBY_VERSION ]] ; then
+		KOMACHI_RVM_="$KOMACHI_BRACKET_COLOR"[rb:"$KOMACHI_RVM_COLOR${RUBY_VERSION}$KOMACHI_BRACKET_COLOR"]"%{$reset_color%}"
 	else
 		KOMACHI_RVM_=
 	fi
 }
 
 _get_pyenv () {
-	if [[ "$(_get_pythonversion)" != "" ]] ; then
-		KOMACHI_PYENV_="$KOMACHI_BRACKET_COLOR"[py:"$KOMACHI_PYENV_COLOR${$(_get_pythonversion)}$KOMACHI_BRACKET_COLOR"]"%{$reset_color%}"
+	local PYTHON_VERSION=$(_get_pythonversion)
+	if [[ -n $PYTHON_VERSION ]] ; then
+		KOMACHI_PYENV_="$KOMACHI_BRACKET_COLOR"[py:"$KOMACHI_PYENV_COLOR${PYTHON_VERSION}$KOMACHI_BRACKET_COLOR"]"%{$reset_color%}"
 	else
 		KOMACHI_PYENV_=
 	fi

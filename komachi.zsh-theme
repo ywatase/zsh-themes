@@ -1,3 +1,7 @@
+setopt prompt_subst
+autoload -Uz colors
+colors
+
 KOMACHI_BRACKET_COLOR="%{$fg[white]%}"
 KOMACHI_AWSENV_COLOR="%{$fg[yellow]%}"
 KOMACHI_MKRENV_COLOR="%{$fg[cyan]%}"

@@ -23,9 +23,15 @@ ZSH_THEME_GIT_PROMPT_DIRTY=" $KOMACHI_GIT_DIRTY_COLOR✗"
 KOMACHI_PLENV_PATH=${$(whence -p plenv):A:h}
 KOMACHI_PYENV_PATH=${$(whence -p pyenv):A:h}
 KOMACHI_RBENV_PATH=${$(whence -p rbenv):A:h}
-KOMACHI_PLENV_ROOT=${PLENV_ROOT:-$(command plenv exec perl -e 'print $ENV{"PLENV_ROOT"}')}
-KOMACHI_PYENV_ROOT=${PYENV_ROOT:-$(command pyenv exec python -c 'import os; print(os.environ.get("PYENV_ROOT"))')}
-KOMACHI_RBENV_ROOT=${RBENV_ROOT:-$(command rbenv exec ruby -e 'print ENV["RBENV_ROOT"]')}
+if [[ -n $KOMACHI_PLENV_PATH ]] ; then
+  KOMACHI_PLENV_ROOT=${PLENV_ROOT:-$(command plenv exec perl -e 'print $ENV{"PLENV_ROOT"}')}
+fi
+if [[ -n $KOMACHI_PYENV_PATH ]] ; then
+  KOMACHI_PYENV_ROOT=${PYENV_ROOT:-$(command pyenv exec python -c 'import os; print(os.environ.get("PYENV_ROOT"))')}
+fi
+if [[ -n $KOMACHI_RBENV_PATH ]] ; then
+  KOMACHI_RBENV_ROOT=${RBENV_ROOT:-$(command rbenv exec ruby -e 'print ENV["RBENV_ROOT"]')}
+fi
 
 # start: copy from oh-my-zsh.git https://github.com/robbyrussell/oh-my-zsh/blob/master/lib/git.zsh
 
